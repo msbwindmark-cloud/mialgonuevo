@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Gestión Ozaz</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.3/zephyr/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-card {
+            max-width: 450px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="card register-card border-0">
+    <div class="card-body p-5">
+        <h3 class="text-center mb-4 text-primary fw-bold">Crear Cuenta</h3>
+        
+        {% if form.errors %}
+        <div class="alert alert-danger small">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <strong>{{ field.label }}:</strong> {{ error }}<br>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                {{ error }}<br>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'registro' %}">
+            {% csrf_token %}
+            
+            <div class="form-floating mb-3 position-relative">
+                <input type="text" class="form-control pe-5" id="id_username" name="username" placeholder="Nombre de usuario" required maxlength="150" autofocus>
+                <label for="id_username">Nombre de usuario</label>
+                <button type="button" id="voice-user" class="btn border-0 position-absolute end-0 top-50 translate-middle-y me-2 z-3 text-muted" style="background: none;">
+                    <i class="bi bi-mic-fill fs-5"></i>
+                </button>
+            </div>
+
+            <div class="form-floating mb-3 position-relative">
+                <input type="email" class="form-control pe-5" id="id_email" name="email" placeholder="Correo electrónico" required>
+                <label for="id_email">Correo electrónico</label>
+                <button type="button" id="voice-email" class="btn border-0 position-absolute end-0 top-50 translate-middle-y me-2 z-3 text-muted" style="background: none;">
+                    <i class="bi bi-mic-fill fs-5"></i>
+                </button>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="id_password1" name="password1" placeholder="Contraseña" required>
+                <label for="id_password1">Contraseña</label>
+            </div>
+
+            <div class="form-floating mb-4">
+                <input type="password" class="form-control" id="id_password2" name="password2" placeholder="Confirmar Contraseña" required>
+                <label for="id_password2">Confirmar contraseña</label>
+            </div>
+
+            <button class="btn btn-primary w-100 py-2 mb-3 rounded-pill" type="submit">Registrarse</button>
+            
+            <div class="text-center mt-3">
+                <span class="text-muted small">¿Ya tienes cuenta?</span> 
+                <a href="{% url 'login' %}" class="small text-decoration-none fw-bold">Inicia sesión</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'voice_offline.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const voiceUser = initializeVoiceControl({ type: 'single', fieldId: 'id_username' });
+        const voiceEmail = initializeVoiceControl({ type: 'single', fieldId: 'id_email' });
+
+        if (voiceUser) document.getElementById('voice-user').addEventListener('click', () => voiceUser.start());
+        if (voiceEmail) document.getElementById('voice-email').addEventListener('click', () => voiceEmail.start());
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Ozaz</title>
+    
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.3/zephyr/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.7/css/dataTables.bootstrap5.min.css">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <style>
+        body { padding-top: 70px; transition: background-color 0.3s, color 0.3s; }
+        /* Ajuste elegante para que las tarjetas resalten bien en modo oscuro */
+        [data-bs-theme="dark"] .card { background-color: #1e1e24; border: 1px solid #2d2d35 !important; }
+        [data-bs-theme="dark"] .table-light { --bs-table-bg: #2d2d35; --bs-table-color: #fff; }
+        [data-bs-theme="dark"] .list-group-item { background-color: transparent; color: #fff; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">Gestión Ozaz</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarColor01"> 
+                <ul class="navbar-nav ms-auto align-items-center"> {% if user.is_authenticated %} 
+                        {% if user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link text-warning fw-bold me-2" href="/admin/" target="_blank">
+                                <i class="bi bi-shield-lock-fill"></i> Panel de Auditoría
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="nav-item dropdown me-3">
+                            <button class="btn btn-link nav-link dropdown-toggle" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme">
+                                <i class="bi bi-circle-half" id="theme-icon-active"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme">
+                                <li>
+                                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light">
+                                        <i class="bi bi-sun-fill me-2"></i> Claro
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark">
+                                        <i class="bi bi-moon-stars-fill me-2"></i> Oscuro
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="auto">
+                                        <i class="bi bi-circle-half me-2"></i> Sistema
+                                    </button>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item">
+                            <span class="nav-link text-white me-2">Hola, {{ user.username }}</span> 
+                        </li>
+                        <li class="nav-item">
+                            <form action="{% url 'logout' %}" method="post" class="d-inline" id="logout-form"> 
+                                {% csrf_token %} 
+                                <button type="submit" class="btn btn-link nav-link">Cerrar Sesión</button> 
+                            </form>
+                            <script>
+                                document.getElementById('logout-form').addEventListener('submit', function(e) {
+                                    if (!navigator.onLine) {
+                                        e.preventDefault();
+                                        window.location.href = '/login/';
+                                    }
+                                });
+                            </script>
+                        </li>
+                    {% else %} 
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a> 
+                        </li>
+                    {% endif %} 
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4"> 
+        {% if messages %} 
+            {% for message in messages %} 
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert"> 
+                    {{ message }} 
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> 
+                </div> 
+            {% endfor %} 
+        {% endif %} 
+
+        {% block content %}{% endblock %} 
+    </div> 
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> 
+
+    <script src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        (() => {
+            'use strict'
+            const getStoredTheme = () => localStorage.getItem('theme')
+            const setStoredTheme = theme => localStorage.setItem('theme', theme)
+
+            const getPreferredTheme = () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme) { return storedTheme }
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            }
+
+            const setTheme = theme => {
+                if (theme === 'auto') {
+                    document.documentElement.setAttribute('data-bs-theme', (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme)
+                }
+            }
+
+            setTheme(getPreferredTheme())
+
+            const showActiveTheme = (theme, focus = false) => {
+                const themeToggler = document.querySelector('#bd-theme')
+                if (!themeToggler) return
+
+                const activeThemeIcon = document.querySelector('#theme-icon-active')
+                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+                
+                // Cambiar el icono principal según la selección
+                if (theme === 'light') {
+                    activeThemeIcon.className = 'bi bi-sun-fill'
+                } else if (theme === 'dark') {
+                    activeThemeIcon.className = 'bi bi-moon-stars-fill'
+                } else {
+                    activeThemeIcon.className = 'bi bi-circle-half'
+                }
+
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active')
+                    element.setAttribute('aria-pressed', 'false')
+                })
+
+                btnToActive.classList.add('active')
+                btnToActive.setAttribute('aria-pressed', 'true')
+            }
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
+                    setTheme(getPreferredTheme())
+                }
+            })
+
+            window.addEventListener('DOMContentLoaded', () => {
+                showActiveTheme(getPreferredTheme())
+
+                document.querySelectorAll('[data-bs-theme-value]').forEach(toggle => {
+                    toggle.addEventListener('click', () => {
+                        const theme = toggle.getAttribute('data-bs-theme-value')
+                        setStoredTheme(theme)
+                        setTheme(theme)
+                        showActiveTheme(theme, true)
+                    })
+                })
+            })
+        })()
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+    <script src="{% static 'voice_offline.js' %}"></script>
+    <script>
+        // --- ASISTENTE DE VOZ GLOBAL ---
+        $(document).ready(function() {
+            const floatingMic = $('<button id="global-assistant" class="btn btn-primary shadow-lg rounded-circle" style="position:fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 9999;"><i class="bi bi-mic-fill fs-3"></i></button>');
+            $('body').append(floatingMic);
+
+            const assistantRec = initializeVoiceControl({ type: 'assistant' });
+            if (assistantRec) {
+                $('#global-assistant').click(function() {
+                    $(this).removeClass('btn-primary').addClass('btn-danger animate-pulse');
+                    assistantRec.start();
+                });
+                assistantRec.onend = () => {
+                   $('#global-assistant').removeClass('btn-danger animate-pulse').addClass('btn-primary');
+                };
+            }
+        });
+
+        // --- LÓGICA DE INSTALACIÓN PWA ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = $('<li class="nav-item"><button class="btn btn-warning btn-sm ms-2" id="btn-install-pwa"><i class="bi bi-download"></i> Instalar App</button></li>');
+            $('.navbar-nav').append(installBtn);
+            
+            $('#btn-install-pwa').click(async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        $('#btn-install-pwa').parent().remove();
+                    }
+                    deferredPrompt = null;
+                }
+            });
+        });
+
+        // Registro de Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.log('SW error', err));
+            });
+        }
+
+        // Botón de Sincronización en Navbar (Solo si el usuario está autenticado)
+        {% if user.is_authenticated %}
+        $(document).ready(async function() {
+            const syncBtn = $('<li class="nav-item"><button class="btn btn-outline-light btn-sm ms-2" id="btn-sync-offline" title="Sincronizar datos locales"><i class="bi bi-cloud-arrow-up"></i> <span id="sync-count" class="badge bg-danger">0</span></button></li>');
+            $('.navbar-nav').prepend(syncBtn);
+
+            const updateSyncCount = async () => {
+                const offlineData = await getOfflineRegistros();
+                $('#sync-count').text(offlineData.length);
+                if (offlineData.length > 0) {
+                    $('#sync-count').show();
+                } else {
+                    $('#sync-count').hide();
+                }
+            };
+            
+            setInterval(updateSyncCount, 5000);
+            updateSyncCount();
+
+            $('#btn-sync-offline').click(() => {
+                syncOfflineData("{% url 'guardar_ajax' %}", "{{ csrf_token }}");
+            });
+        });
+        {% endif %}
+    </script>
+</body>
+</html>
