@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ozaz-v14';
+const CACHE_NAME = 'ozaz-v16';
 const STATIC_ASSETS = [
     '/static/favicon.png',
     '/static/voice_offline.js',

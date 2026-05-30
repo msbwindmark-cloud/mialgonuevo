@@ -304,15 +304,27 @@ function initializeVoiceControl(targetInputs) {
         transcript = transcript.toLowerCase().trim();
 
         // 0. Pre-procesar Comandos de Autoguardado para no ensuciar los campos
-        const saveCommands = ['guardar', 'enviar', 'sauvegarder', 'enregistrer', 'envoyer', 'fini', 'entrar', 'login', 'entrer'];
+        const saveCommands = [
+            'sauvegarder', 'enregistrer', 
+            'sauvegarde', 'sauvegardé', 'sof garden',
+            'suangarde', 'sof garde', 'sofgarden',
+            'subgalde', 'subgarde', 'suangard', 'sobergar', 'sofgarde', 'sub gate',
+            'guardar', 'subgate', 'envoyer', 'sovgard',
+            'entrar', 'entrer', 'enviar', 'sovgar', 'garden', 'garder',
+            'login', 'garde', 'fini', 'sof'
+        ];
         let shouldAutoSave = false;
+        let lowerTranscript = transcript.toLowerCase();
         for (let cmd of saveCommands) {
-            if (transcript.includes(cmd)) {
+            if (lowerTranscript.includes(cmd)) {
                 shouldAutoSave = true;
-                // Remover el comando para que no entre en el campo de contraseña/monto
-                transcript = transcript.replace(new RegExp('\\b' + cmd + '\\b', 'gi'), '').trim();
+                // Remover el comando de forma simple y segura
+                transcript = transcript.replace(new RegExp(cmd, 'gi'), '').trim();
             }
         }
+
+        // Limpiar puntos, comas o conectores sueltos al final
+        transcript = transcript.replace(/(\s+punto|\s+point|\s+coma|\s+virgule|\s*\.|\s*,)\s*$/i, '').trim();
 
         // Mostrar vista previa en vivo
         const preview = document.getElementById('voice-transcript-preview');
